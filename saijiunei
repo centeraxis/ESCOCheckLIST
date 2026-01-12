@@ -1,0 +1,1293 @@
+import React, { useState, useEffect } from 'react';
+import { Check, ChevronDown, ChevronUp, AlertCircle, RotateCcw, Award, FileText, Clipboard, X, Send, Mail, Printer } from 'lucide-react';
+
+
+const ChecklistApp = () => {
+  // マニュアルデータ定義
+  const checklistData = [
+    {
+      id: 'daily_flow',
+      title: '1日の流れ',
+      groups: [
+        {
+          id: 'step1',
+          title: '① 店長挨拶',
+          description: '目的: 店舗との信頼関係を築き、円滑に催事を進める。',
+          alert: '店内でできればラッキーの精神で。断られたらすぐ指示に従うこと。',
+          items: [
+            { id: 'step1_1', label: 'サービスカウンター/従業員に到着を伝える' },
+            { id: 'step1_2', label: '店長に挨拶し、催事場所の指示に従う' },
+            { id: 'step1_3', label: '（必要な場合）気候に応じた場所交渉を行う' },
+            { id: 'step1_4', label: '店長からの注意事項を必ずメモする' }
+          ]
+        },
+        {
+          id: 'step2',
+          title: '② 設営',
+          description: '目的: 集客効果の高い催事場を作る。',
+          items: [
+            { id: 'step2_1', label: '「現場ナビ 催事場づくりマニュアル」に従って設営' },
+            { id: 'step2_2', label: '看板・アンパンマン・タペストリーを各入口に配置' },
+            { id: 'step2_3', label: '特に人通りの多い場所に看板等を置く' }
+          ]
+        },
+        {
+          id: 'step3',
+          title: '③ 朝礼',
+          description: '目的: 全員で本日の目標を共有し、意識を合わせる。',
+          items: [
+            { id: 'step3_1', label: '現在のアポ取得状況を確認' },
+            { id: 'step3_2', label: '本日の取得目標数を共有' },
+            { id: 'step3_3', label: '直近の空き枠を確認' },
+            { id: 'step3_4', label: '店舗特性（来客数・客層）の確認' }
+          ]
+        },
+        {
+          id: 'step4',
+          title: '④ チケット配りの配置',
+          description: '目的: 集客効率を最大化する。',
+          items: [
+            { id: 'step4_1', label: '基本は人通りの最も多い場所に配置' },
+            { id: 'step4_2', label: '配置の詳細は「チケット配り配置」タブを確認' }
+          ]
+        },
+        {
+          id: 'step5',
+          title: '⑤ 昼休憩',
+          description: '目的: パフォーマンス維持。',
+          alert: '人数が減ると集客力が落ちるため注意',
+          items: [
+            { id: 'step5_1', label: '社員4名未満の場合：全員で同時に休憩（催事場を閉める）' },
+            { id: 'step5_2', label: '交代休憩は避け、集客力を落とさない' }
+          ]
+        },
+        {
+          id: 'step6',
+          title: '⑥ 昼礼',
+          description: '目的: 午前の結果を振り返り、午後に活かす。',
+          items: [
+            { id: 'step6_1', label: '午前中の成果確認' },
+            { id: 'step6_2', label: '午後の集客方法再検討' },
+            { id: 'step6_3', label: 'ネガティブ対応（断られ方など）の共有' }
+          ]
+        },
+        {
+          id: 'step7',
+          title: '⑦ 撤収',
+          description: '目的: 店舗に迷惑をかけず片付ける。',
+          items: [
+            { id: 'step7_1', label: '設営物を丁寧に撤収' },
+            { id: 'step7_2', label: '店舗や通路を汚さないよう清掃確認' }
+          ]
+        },
+        {
+          id: 'step8',
+          title: '⑧ 終礼',
+          description: '目的: 1日の振り返りと翌日への改善。',
+          items: [
+            { id: 'step8_1', label: '結果と進捗の確認' },
+            { id: 'step8_2', label: '良かった点・反省点の共有' },
+            { id: 'step8_3', label: '明日以降の改善策決定' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'ticket_dist',
+      title: 'チケット配り・配置',
+      groups: [
+        {
+          id: 'pos_basic',
+          title: '基本配置ルール',
+          items: [
+            { id: 'pos_basic_1', label: 'メイン入口：チケット配りスタッフ（基本）' },
+            { id: 'pos_basic_2', label: 'その他入口：社員が立ち、フォロー' },
+            { id: 'pos_basic_3', label: '状況に応じ配置換えを行う' }
+          ]
+        },
+        {
+          id: 'pos_case1',
+          title: '催事場がメイン入口に近い場合',
+          items: [
+            { id: 'pos_case1_1', label: '接客少ない時：メイン入口に社員、サブにスタッフ' },
+            { id: 'pos_case1_2', label: '接客多い時：メイン入口にスタッフ、落ち着いたら社員がサブへ' }
+          ]
+        },
+        {
+          id: 'pos_case2',
+          title: '催事場がメイン入口から遠い場合',
+          items: [
+            { id: 'pos_case2_1', label: 'メイン入口：チケット配りスタッフ' },
+            { id: 'pos_case2_2', label: '催事場に近い入口：社員がフォロー' }
+          ]
+        },
+        {
+          id: 'check_staff',
+          title: 'スタッフ状況確認・指導',
+          alert: '数値を見て配置を柔軟に変えること',
+          items: [
+            { id: 'check_staff_1', label: '開始から2時間30分ごとに確認（以降1時間ごと）' },
+            { id: 'check_staff_2', label: '受取率5割以下：社員が横に立ち一緒に配布' },
+            { id: 'check_staff_3', label: '受取率3割以下：催事場近くへ移動させフォロー・指導' }
+          ]
+        },
+        {
+          id: 'measure',
+          title: '配布効果測定',
+          items: [
+            { id: 'measure_1', label: '必要に応じチケット裏に印をつけて配布' },
+            { id: 'measure_2', label: '「どの入口が有効か」「個々の技量」を確認する' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'crowd_control',
+      title: '混雑・イレギュラー対応',
+      groups: [
+        {
+          id: 'crowd_basic',
+          title: '基本ルール',
+          items: [
+            { id: 'crowd_basic_1', label: '足元がおぼつかない方以外は、高齢者も含め全員に配布' },
+            { id: 'crowd_basic_2', label: '混雑時は以下の制限ルールを適用' }
+          ]
+        },
+        {
+          id: 'limit_senior',
+          title: '状況：社員接客中・スタッフ対応中',
+          alert: '若い世代への声かけ漏れを防ぐことを優先',
+          items: [
+            { id: 'limit_senior_1', label: '70代以上にはチケット配布しない（制限）' },
+            { id: 'limit_senior_2', label: 'それでも溢れる場合：アンケートで70代なら終了（同居家族いても）' }
+          ]
+        },
+        {
+          id: 'limit_family',
+          title: '状況：子連れで来場者が溢れている',
+          items: [
+            { id: 'limit_family_1', label: 'アンケートは「年齢のみ」確認（光熱費聞かない）' },
+            { id: 'limit_family_2', label: 'スタッフに子供対応させ、社員は接客に専念' }
+          ]
+        }
+      ]
+    }
+  ];
+
+
+  // State
+  const [checkedItems, setCheckedItems] = useState({});
+  const [collapsedGroups, setCollapsedGroups] = useState({});
+  const [activeTab, setActiveTab] = useState('daily_flow');
+ 
+  // Report State
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reporterName, setReporterName] = useState('');
+  const [reportDate, setReportDate] = useState('');
+  const [reportComment, setReportComment] = useState('');
+
+
+  // Initial date set
+  useEffect(() => {
+    // Set current date-time in local format for input
+    const now = new Date();
+    const localIsoString = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+    setReportDate(localIsoString);
+  }, []);
+
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('eventChecklistState_v2');
+    if (saved) {
+      setCheckedItems(JSON.parse(saved));
+    }
+   
+    // Load reporter name if saved previously
+    const savedName = localStorage.getItem('eventChecklistReporterName');
+    if (savedName) setReporterName(savedName);
+  }, []);
+
+
+  // Save to localStorage on change
+  useEffect(() => {
+    localStorage.setItem('eventChecklistState_v2', JSON.stringify(checkedItems));
+  }, [checkedItems]);
+ 
+  // Save reporter name
+  useEffect(() => {
+    if (reporterName) localStorage.setItem('eventChecklistReporterName', reporterName);
+  }, [reporterName]);
+
+
+  const toggleCheck = (id) => {
+    setCheckedItems(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+
+  const toggleGroupCollapse = (id) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+
+  const resetChecklist = () => {
+    if (window.confirm('チェックリストをすべてリセットしますか？')) {
+      setCheckedItems({});
+      setReportComment('');
+      window.scrollTo(0, 0);
+    }
+  };
+
+
+  // Calculate progress
+  const calculateProgress = () => {
+    let totalItems = 0;
+    let checkedCount = 0;
+
+
+    checklistData.forEach(cat => {
+      cat.groups.forEach(group => {
+        group.items.forEach(item => {
+          totalItems++;
+          if (checkedItems[item.id]) checkedCount++;
+        });
+      });
+    });
+
+
+    if (totalItems === 0) return 0;
+    return Math.round((checkedCount / totalItems) * 100);
+  };
+
+
+  const progress = calculateProgress();
+
+
+  // Helper to check if a group is fully completed
+  const isGroupComplete = (group) => {
+    return group.items.every(item => checkedItems[item.id]);
+  };
+
+
+  // Generate Report Text
+  const generateReportText = () => {
+    const dateStr = reportDate.replace('T', ' ');
+    let text = `【催事運営 実施報告書】\n`;
+    text += `----------------------------\n`;
+    text += `日時: ${dateStr}\n`;
+    text += `報告者: ${reporterName || '未記入'}\n`;
+    text += `進捗率: ${progress}%\n`;
+    text += `----------------------------\n\n`;
+
+
+    if (reportComment) {
+      text += `【備考・特記事項】\n${reportComment}\n\n`;
+    }
+
+
+    text += `【実施詳細】\n`;
+    checklistData.forEach(cat => {
+      text += `■ ${cat.title}\n`;
+      cat.groups.forEach(group => {
+        const isComplete = isGroupComplete(group);
+        text += `${isComplete ? '✅' : '⬜'} ${group.title}\n`;
+      });
+      text += '\n';
+    });
+   
+    return text;
+  };
+
+
+  const copyToClipboard = () => {
+    const text = generateReportText();
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      alert('報告書をクリップボードにコピーしました！');
+    } catch (err) {
+      alert('コピーに失敗しました。');
+    }
+    document.body.removeChild(textArea);
+  };
+
+
+  const sendToLine = () => {
+    const text = generateReportText();
+    const url = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
+
+  const sendToEmail = () => {
+    const text = generateReportText();
+    const subject = `【催事報告】${reporterName || '担当者'}`;
+    const url = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+    window.location.href = url;
+  };
+
+
+  // 印刷ウィンドウを開く関数
+  const printReport = () => {
+    const reportText = generateReportText();
+   
+    // 新しいウィンドウを開く
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('ポップアップがブロックされました。設定を確認してください。');
+      return;
+    }
+
+
+    // HTMLを書き込む
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>催事運営 実施報告書_${new Date().toISOString().slice(0,10)}</title>
+          <style>
+            body {
+              font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+              padding: 40px;
+              color: #333;
+              background: white;
+            }
+            pre {
+              font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", monospace;
+              white-space: pre-wrap;
+              word-wrap: break-word;
+              font-size: 14px;
+              line-height: 1.6;
+              background: white;
+            }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <pre>${reportText}</pre>
+        </body>
+      </html>
+    `);
+   
+    printWindow.document.close();
+    printWindow.focus();
+   
+    // 読み込み完了を待ってから印刷
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 250);
+  };
+
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-24 font-sans text-gray-800">
+      {/* Header */}
+      <header className="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-20">
+        <div className="max-w-3xl mx-auto flex justify-between items-center">
+          <h1 className="text-lg font-bold flex items-center gap-2">
+            <Award className="w-5 h-5" />
+            催事運営チェックリスト
+          </h1>
+          <button
+            onClick={resetChecklist}
+            className="text-xs bg-blue-700 hover:bg-blue-800 px-3 py-1.5 rounded flex items-center gap-1 transition-colors"
+          >
+            <RotateCcw size={14} /> リセット
+          </button>
+        </div>
+
+
+        {/* Progress Bar in Header */}
+        <div className="max-w-3xl mx-auto mt-3">
+          <div className="flex justify-between text-xs mb-1 opacity-90">
+            <span>進捗状況</span>
+            <span>{progress}% 完了</span>
+          </div>
+          <div className="w-full bg-blue-800 rounded-full h-2">
+            <div
+              className="bg-green-400 h-2 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+        </div>
+      </header>
+
+
+      <main className="max-w-3xl mx-auto p-4">
+        {/* Tab Navigation */}
+        <div className="flex bg-white rounded-lg shadow p-1 mb-6 sticky top-28 z-10 overflow-x-auto">
+          {checklistData.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 py-2 px-3 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {tab.title}
+            </button>
+          ))}
+        </div>
+
+
+        {/* Content Area */}
+        <div className="space-y-6">
+          {checklistData.find(d => d.id === activeTab)?.groups.map((group) => {
+            const isComplete = isGroupComplete(group);
+            const isCollapsed = collapsedGroups[group.id];
+
+
+            return (
+              <div
+                key={group.id}
+                className={`bg-white rounded-xl shadow-sm border transition-all duration-200 ${
+                  isComplete ? 'border-green-200 shadow-green-50' : 'border-gray-200'
+                }`}
+              >
+                {/* Group Header */}
+                <div
+                  className="p-4 flex items-start justify-between cursor-pointer select-none"
+                  onClick={() => toggleGroupCollapse(group.id)}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h2 className={`font-bold text-lg ${isComplete ? 'text-green-700' : 'text-gray-800'}`}>
+                        {group.title}
+                      </h2>
+                      {isComplete && <Check className="w-5 h-5 text-green-500" />}
+                    </div>
+                    {group.description && !isCollapsed && (
+                      <p className="text-sm text-gray-500 mt-1">{group.description}</p>
+                    )}
+                  </div>
+                  <div className="text-gray-400 ml-2 mt-1">
+                    {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+                  </div>
+                </div>
+
+
+                {/* Alert Box */}
+                {!isCollapsed && group.alert && (
+                  <div className="mx-4 mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg flex items-start gap-2 border border-red-100">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>{group.alert}</span>
+                  </div>
+                )}
+
+
+                {/* Items List */}
+                {!isCollapsed && (
+                  <div className="border-t border-gray-100 divide-y divide-gray-100">
+                    {group.items.map((item) => (
+                      <label
+                        key={item.id}
+                        className={`flex items-start p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                          checkedItems[item.id] ? 'bg-blue-50/30' : ''
+                        }`}
+                      >
+                        <div className="relative flex items-center mt-0.5">
+                          <input
+                            type="checkbox"
+                            className="w-5 h-5 border-2 border-gray-300 rounded text-blue-600 focus:ring-blue-500 transition-colors cursor-pointer"
+                            checked={!!checkedItems[item.id]}
+                            onChange={() => toggleCheck(item.id)}
+                          />
+                        </div>
+                        <span className={`ml-3 text-sm leading-relaxed select-none ${
+                          checkedItems[item.id] ? 'text-gray-400 line-through' : 'text-gray-700'
+                        }`}>
+                          {item.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </main>
+
+
+      {/* Floating Report Button */}
+      <div className="fixed bottom-6 right-6 z-20">
+        <button
+          onClick={() => setShowReportModal(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+        >
+          <FileText className="w-6 h-6" />
+          <span className="font-bold hidden sm:inline">報告を作成</span>
+        </button>
+      </div>
+
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-4 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600" />
+                日報・報告作成
+              </h3>
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-full text-gray-500"
+              >
+                <X size={24} />
+              </button>
+            </div>
+           
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">報告者名</label>
+                <input
+                  type="text"
+                  value={reporterName}
+                  onChange={(e) => setReporterName(e.target.value)}
+                  placeholder="氏名を入力"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">日時</label>
+                <input
+                  type="datetime-local"
+                  value={reportDate}
+                  onChange={(e) => setReportDate(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">進捗状況</label>
+                <div className="w-full bg-gray-100 rounded-full h-4 relative overflow-hidden">
+                  <div
+                    className="bg-green-500 h-full text-[10px] text-white flex items-center justify-center font-bold"
+                    style={{ width: `${progress}%` }}
+                  >
+                    {progress}%
+                  </div>
+                </div>
+              </div>
+
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">特記事項・備考</label>
+                <textarea
+                  value={reportComment}
+                  onChange={(e) => setReportComment(e.target.value)}
+                  placeholder="今日の反省点、次回への申し送り事項など..."
+                  className="w-full p-2 border border-gray-300 rounded h-32 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+                ></textarea>
+              </div>
+
+
+              <div className="bg-gray-50 p-3 rounded text-xs text-gray-500">
+                <p>※ 生成されたテキストはクリップボードにコピーしたり、LINEやメールで送信できます。</p>
+              </div>
+            </div>
+
+
+            <div className="p-4 border-t bg-gray-50 grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button
+                onClick={copyToClipboard}
+                className="flex flex-col items-center justify-center p-2 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors gap-1 text-gray-700"
+              >
+                <Clipboard size={20} />
+                <span className="text-xs font-bold">コピー</span>
+              </button>
+              <button
+                onClick={sendToLine}
+                className="flex flex-col items-center justify-center p-2 bg-[#06C755] text-white rounded hover:bg-[#05b34c] transition-colors gap-1"
+              >
+                <Send size={20} />
+                <span className="text-xs font-bold">LINEで送る</span>
+              </button>
+              <button
+                onClick={sendToEmail}
+                className="flex flex-col items-center justify-center p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors gap-1"
+              >
+                <Mail size={20} />
+                <span className="text-xs font-bold">メール作成</span>
+              </button>
+              <button
+                onClick={printReport}
+                className="flex flex-col items-center justify-center p-2 bg-gray-700 text-white rounded hover:bg-gray-800 transition-colors gap-1"
+              >
+                <Printer size={20} />
+                <span className="text-xs font-bold">印刷</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+export default ChecklistApp;
+import React, { useState, useEffect } from 'react';
+import { Check, ChevronDown, ChevronUp, AlertCircle, RotateCcw, Award, FileText, Clipboard, X, Send, Mail, Printer } from 'lucide-react';
+
+
+const ChecklistApp = () => {
+  // マニュアルデータ定義
+  const checklistData = [
+    {
+      id: 'daily_flow',
+      title: '1日の流れ',
+      groups: [
+        {
+          id: 'step1',
+          title: '① 店長挨拶',
+          description: '目的: 店舗との信頼関係を築き、円滑に催事を進める。',
+          alert: '店内でできればラッキーの精神で。断られたらすぐ指示に従うこと。',
+          items: [
+            { id: 'step1_1', label: 'サービスカウンター/従業員に到着を伝える' },
+            { id: 'step1_2', label: '店長に挨拶し、催事場所の指示に従う' },
+            { id: 'step1_3', label: '（必要な場合）気候に応じた場所交渉を行う' },
+            { id: 'step1_4', label: '店長からの注意事項を必ずメモする' }
+          ]
+        },
+        {
+          id: 'step2',
+          title: '② 設営',
+          description: '目的: 集客効果の高い催事場を作る。',
+          items: [
+            { id: 'step2_1', label: '「現場ナビ 催事場づくりマニュアル」に従って設営' },
+            { id: 'step2_2', label: '看板・アンパンマン・タペストリーを各入口に配置' },
+            { id: 'step2_3', label: '特に人通りの多い場所に看板等を置く' }
+          ]
+        },
+        {
+          id: 'step3',
+          title: '③ 朝礼',
+          description: '目的: 全員で本日の目標を共有し、意識を合わせる。',
+          items: [
+            { id: 'step3_1', label: '現在のアポ取得状況を確認' },
+            { id: 'step3_2', label: '本日の取得目標数を共有' },
+            { id: 'step3_3', label: '直近の空き枠を確認' },
+            { id: 'step3_4', label: '店舗特性（来客数・客層）の確認' }
+          ]
+        },
+        {
+          id: 'step4',
+          title: '④ チケット配りの配置',
+          description: '目的: 集客効率を最大化する。',
+          items: [
+            { id: 'step4_1', label: '基本は人通りの最も多い場所に配置' },
+            { id: 'step4_2', label: '配置の詳細は「チケット配り配置」タブを確認' }
+          ]
+        },
+        {
+          id: 'step5',
+          title: '⑤ 昼休憩',
+          description: '目的: パフォーマンス維持。',
+          alert: '人数が減ると集客力が落ちるため注意',
+          items: [
+            { id: 'step5_1', label: '社員4名未満の場合：全員で同時に休憩（催事場を閉める）' },
+            { id: 'step5_2', label: '交代休憩は避け、集客力を落とさない' }
+          ]
+        },
+        {
+          id: 'step6',
+          title: '⑥ 昼礼',
+          description: '目的: 午前の結果を振り返り、午後に活かす。',
+          items: [
+            { id: 'step6_1', label: '午前中の成果確認' },
+            { id: 'step6_2', label: '午後の集客方法再検討' },
+            { id: 'step6_3', label: 'ネガティブ対応（断られ方など）の共有' }
+          ]
+        },
+        {
+          id: 'step7',
+          title: '⑦ 撤収',
+          description: '目的: 店舗に迷惑をかけず片付ける。',
+          items: [
+            { id: 'step7_1', label: '設営物を丁寧に撤収' },
+            { id: 'step7_2', label: '店舗や通路を汚さないよう清掃確認' }
+          ]
+        },
+        {
+          id: 'step8',
+          title: '⑧ 終礼',
+          description: '目的: 1日の振り返りと翌日への改善。',
+          items: [
+            { id: 'step8_1', label: '結果と進捗の確認' },
+            { id: 'step8_2', label: '良かった点・反省点の共有' },
+            { id: 'step8_3', label: '明日以降の改善策決定' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'ticket_dist',
+      title: 'チケット配り・配置',
+      groups: [
+        {
+          id: 'pos_basic',
+          title: '基本配置ルール',
+          items: [
+            { id: 'pos_basic_1', label: 'メイン入口：チケット配りスタッフ（基本）' },
+            { id: 'pos_basic_2', label: 'その他入口：社員が立ち、フォロー' },
+            { id: 'pos_basic_3', label: '状況に応じ配置換えを行う' }
+          ]
+        },
+        {
+          id: 'pos_case1',
+          title: '催事場がメイン入口に近い場合',
+          items: [
+            { id: 'pos_case1_1', label: '接客少ない時：メイン入口に社員、サブにスタッフ' },
+            { id: 'pos_case1_2', label: '接客多い時：メイン入口にスタッフ、落ち着いたら社員がサブへ' }
+          ]
+        },
+        {
+          id: 'pos_case2',
+          title: '催事場がメイン入口から遠い場合',
+          items: [
+            { id: 'pos_case2_1', label: 'メイン入口：チケット配りスタッフ' },
+            { id: 'pos_case2_2', label: '催事場に近い入口：社員がフォロー' }
+          ]
+        },
+        {
+          id: 'check_staff',
+          title: 'スタッフ状況確認・指導',
+          alert: '数値を見て配置を柔軟に変えること',
+          items: [
+            { id: 'check_staff_1', label: '開始から2時間30分ごとに確認（以降1時間ごと）' },
+            { id: 'check_staff_2', label: '受取率5割以下：社員が横に立ち一緒に配布' },
+            { id: 'check_staff_3', label: '受取率3割以下：催事場近くへ移動させフォロー・指導' }
+          ]
+        },
+        {
+          id: 'measure',
+          title: '配布効果測定',
+          items: [
+            { id: 'measure_1', label: '必要に応じチケット裏に印をつけて配布' },
+            { id: 'measure_2', label: '「どの入口が有効か」「個々の技量」を確認する' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'crowd_control',
+      title: '混雑・イレギュラー対応',
+      groups: [
+        {
+          id: 'crowd_basic',
+          title: '基本ルール',
+          items: [
+            { id: 'crowd_basic_1', label: '足元がおぼつかない方以外は、高齢者も含め全員に配布' },
+            { id: 'crowd_basic_2', label: '混雑時は以下の制限ルールを適用' }
+          ]
+        },
+        {
+          id: 'limit_senior',
+          title: '状況：社員接客中・スタッフ対応中',
+          alert: '若い世代への声かけ漏れを防ぐことを優先',
+          items: [
+            { id: 'limit_senior_1', label: '70代以上にはチケット配布しない（制限）' },
+            { id: 'limit_senior_2', label: 'それでも溢れる場合：アンケートで70代なら終了（同居家族いても）' }
+          ]
+        },
+        {
+          id: 'limit_family',
+          title: '状況：子連れで来場者が溢れている',
+          items: [
+            { id: 'limit_family_1', label: 'アンケートは「年齢のみ」確認（光熱費聞かない）' },
+            { id: 'limit_family_2', label: 'スタッフに子供対応させ、社員は接客に専念' }
+          ]
+        }
+      ]
+    }
+  ];
+
+
+  // State
+  const [checkedItems, setCheckedItems] = useState({});
+  const [collapsedGroups, setCollapsedGroups] = useState({});
+  const [activeTab, setActiveTab] = useState('daily_flow');
+ 
+  // Report State
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reporterName, setReporterName] = useState('');
+  const [reportDate, setReportDate] = useState('');
+  const [reportComment, setReportComment] = useState('');
+
+
+  // Initial date set
+  useEffect(() => {
+    // Set current date-time in local format for input
+    const now = new Date();
+    const localIsoString = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+    setReportDate(localIsoString);
+  }, []);
+
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('eventChecklistState_v2');
+    if (saved) {
+      setCheckedItems(JSON.parse(saved));
+    }
+   
+    // Load reporter name if saved previously
+    const savedName = localStorage.getItem('eventChecklistReporterName');
+    if (savedName) setReporterName(savedName);
+  }, []);
+
+
+  // Save to localStorage on change
+  useEffect(() => {
+    localStorage.setItem('eventChecklistState_v2', JSON.stringify(checkedItems));
+  }, [checkedItems]);
+ 
+  // Save reporter name
+  useEffect(() => {
+    if (reporterName) localStorage.setItem('eventChecklistReporterName', reporterName);
+  }, [reporterName]);
+
+
+  const toggleCheck = (id) => {
+    setCheckedItems(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+
+  const toggleGroupCollapse = (id) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+
+  const resetChecklist = () => {
+    if (window.confirm('チェックリストをすべてリセットしますか？')) {
+      setCheckedItems({});
+      setReportComment('');
+      window.scrollTo(0, 0);
+    }
+  };
+
+
+  // Calculate progress
+  const calculateProgress = () => {
+    let totalItems = 0;
+    let checkedCount = 0;
+
+
+    checklistData.forEach(cat => {
+      cat.groups.forEach(group => {
+        group.items.forEach(item => {
+          totalItems++;
+          if (checkedItems[item.id]) checkedCount++;
+        });
+      });
+    });
+
+
+    if (totalItems === 0) return 0;
+    return Math.round((checkedCount / totalItems) * 100);
+  };
+
+
+  const progress = calculateProgress();
+
+
+  // Helper to check if a group is fully completed
+  const isGroupComplete = (group) => {
+    return group.items.every(item => checkedItems[item.id]);
+  };
+
+
+  // Generate Report Text
+  const generateReportText = () => {
+    const dateStr = reportDate.replace('T', ' ');
+    let text = `【催事運営 実施報告書】\n`;
+    text += `----------------------------\n`;
+    text += `日時: ${dateStr}\n`;
+    text += `報告者: ${reporterName || '未記入'}\n`;
+    text += `進捗率: ${progress}%\n`;
+    text += `----------------------------\n\n`;
+
+
+    if (reportComment) {
+      text += `【備考・特記事項】\n${reportComment}\n\n`;
+    }
+
+
+    text += `【実施詳細】\n`;
+    checklistData.forEach(cat => {
+      text += `■ ${cat.title}\n`;
+      cat.groups.forEach(group => {
+        const isComplete = isGroupComplete(group);
+        text += `${isComplete ? '✅' : '⬜'} ${group.title}\n`;
+      });
+      text += '\n';
+    });
+   
+    return text;
+  };
+
+
+  const copyToClipboard = () => {
+    const text = generateReportText();
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      alert('報告書をクリップボードにコピーしました！');
+    } catch (err) {
+      alert('コピーに失敗しました。');
+    }
+    document.body.removeChild(textArea);
+  };
+
+
+  const sendToLine = () => {
+    const text = generateReportText();
+    const url = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
+
+  const sendToEmail = () => {
+    const text = generateReportText();
+    const subject = `【催事報告】${reporterName || '担当者'}`;
+    const url = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+    window.location.href = url;
+  };
+
+
+  // 印刷ウィンドウを開く関数
+  const printReport = () => {
+    const reportText = generateReportText();
+   
+    // 新しいウィンドウを開く
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('ポップアップがブロックされました。設定を確認してください。');
+      return;
+    }
+
+
+    // HTMLを書き込む
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>催事運営 実施報告書_${new Date().toISOString().slice(0,10)}</title>
+          <style>
+            body {
+              font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+              padding: 40px;
+              color: #333;
+              background: white;
+            }
+            pre {
+              font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", monospace;
+              white-space: pre-wrap;
+              word-wrap: break-word;
+              font-size: 14px;
+              line-height: 1.6;
+              background: white;
+            }
+            @media print {
+              body { padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <pre>${reportText}</pre>
+        </body>
+      </html>
+    `);
+   
+    printWindow.document.close();
+    printWindow.focus();
+   
+    // 読み込み完了を待ってから印刷
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 250);
+  };
+
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-24 font-sans text-gray-800">
+      {/* Header */}
+      <header className="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-20">
+        <div className="max-w-3xl mx-auto flex justify-between items-center">
+          <h1 className="text-lg font-bold flex items-center gap-2">
+            <Award className="w-5 h-5" />
+            催事運営チェックリスト
+          </h1>
+          <button
+            onClick={resetChecklist}
+            className="text-xs bg-blue-700 hover:bg-blue-800 px-3 py-1.5 rounded flex items-center gap-1 transition-colors"
+          >
+            <RotateCcw size={14} /> リセット
+          </button>
+        </div>
+
+
+        {/* Progress Bar in Header */}
+        <div className="max-w-3xl mx-auto mt-3">
+          <div className="flex justify-between text-xs mb-1 opacity-90">
+            <span>進捗状況</span>
+            <span>{progress}% 完了</span>
+          </div>
+          <div className="w-full bg-blue-800 rounded-full h-2">
+            <div
+              className="bg-green-400 h-2 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+        </div>
+      </header>
+
+
+      <main className="max-w-3xl mx-auto p-4">
+        {/* Tab Navigation */}
+        <div className="flex bg-white rounded-lg shadow p-1 mb-6 sticky top-28 z-10 overflow-x-auto">
+          {checklistData.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 py-2 px-3 text-sm font-medium rounded-md whitespace-nowrap transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {tab.title}
+            </button>
+          ))}
+        </div>
+
+
+        {/* Content Area */}
+        <div className="space-y-6">
+          {checklistData.find(d => d.id === activeTab)?.groups.map((group) => {
+            const isComplete = isGroupComplete(group);
+            const isCollapsed = collapsedGroups[group.id];
+
+
+            return (
+              <div
+                key={group.id}
+                className={`bg-white rounded-xl shadow-sm border transition-all duration-200 ${
+                  isComplete ? 'border-green-200 shadow-green-50' : 'border-gray-200'
+                }`}
+              >
+                {/* Group Header */}
+                <div
+                  className="p-4 flex items-start justify-between cursor-pointer select-none"
+                  onClick={() => toggleGroupCollapse(group.id)}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h2 className={`font-bold text-lg ${isComplete ? 'text-green-700' : 'text-gray-800'}`}>
+                        {group.title}
+                      </h2>
+                      {isComplete && <Check className="w-5 h-5 text-green-500" />}
+                    </div>
+                    {group.description && !isCollapsed && (
+                      <p className="text-sm text-gray-500 mt-1">{group.description}</p>
+                    )}
+                  </div>
+                  <div className="text-gray-400 ml-2 mt-1">
+                    {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+                  </div>
+                </div>
+
+
+                {/* Alert Box */}
+                {!isCollapsed && group.alert && (
+                  <div className="mx-4 mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg flex items-start gap-2 border border-red-100">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>{group.alert}</span>
+                  </div>
+                )}
+
+
+                {/* Items List */}
+                {!isCollapsed && (
+                  <div className="border-t border-gray-100 divide-y divide-gray-100">
+                    {group.items.map((item) => (
+                      <label
+                        key={item.id}
+                        className={`flex items-start p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                          checkedItems[item.id] ? 'bg-blue-50/30' : ''
+                        }`}
+                      >
+                        <div className="relative flex items-center mt-0.5">
+                          <input
+                            type="checkbox"
+                            className="w-5 h-5 border-2 border-gray-300 rounded text-blue-600 focus:ring-blue-500 transition-colors cursor-pointer"
+                            checked={!!checkedItems[item.id]}
+                            onChange={() => toggleCheck(item.id)}
+                          />
+                        </div>
+                        <span className={`ml-3 text-sm leading-relaxed select-none ${
+                          checkedItems[item.id] ? 'text-gray-400 line-through' : 'text-gray-700'
+                        }`}>
+                          {item.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </main>
+
+
+      {/* Floating Report Button */}
+      <div className="fixed bottom-6 right-6 z-20">
+        <button
+          onClick={() => setShowReportModal(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
+        >
+          <FileText className="w-6 h-6" />
+          <span className="font-bold hidden sm:inline">報告を作成</span>
+        </button>
+      </div>
+
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-4 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600" />
+                日報・報告作成
+              </h3>
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-full text-gray-500"
+              >
+                <X size={24} />
+              </button>
+            </div>
+           
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">報告者名</label>
+                <input
+                  type="text"
+                  value={reporterName}
+                  onChange={(e) => setReporterName(e.target.value)}
+                  placeholder="氏名を入力"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">日時</label>
+                <input
+                  type="datetime-local"
+                  value={reportDate}
+                  onChange={(e) => setReportDate(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">進捗状況</label>
+                <div className="w-full bg-gray-100 rounded-full h-4 relative overflow-hidden">
+                  <div
+                    className="bg-green-500 h-full text-[10px] text-white flex items-center justify-center font-bold"
+                    style={{ width: `${progress}%` }}
+                  >
+                    {progress}%
+                  </div>
+                </div>
+              </div>
+
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">特記事項・備考</label>
+                <textarea
+                  value={reportComment}
+                  onChange={(e) => setReportComment(e.target.value)}
+                  placeholder="今日の反省点、次回への申し送り事項など..."
+                  className="w-full p-2 border border-gray-300 rounded h-32 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+                ></textarea>
+              </div>
+
+
+              <div className="bg-gray-50 p-3 rounded text-xs text-gray-500">
+                <p>※ 生成されたテキストはクリップボードにコピーしたり、LINEやメールで送信できます。</p>
+              </div>
+            </div>
+
+
+            <div className="p-4 border-t bg-gray-50 grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button
+                onClick={copyToClipboard}
+                className="flex flex-col items-center justify-center p-2 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors gap-1 text-gray-700"
+              >
+                <Clipboard size={20} />
+                <span className="text-xs font-bold">コピー</span>
+              </button>
+              <button
+                onClick={sendToLine}
+                className="flex flex-col items-center justify-center p-2 bg-[#06C755] text-white rounded hover:bg-[#05b34c] transition-colors gap-1"
+              >
+                <Send size={20} />
+                <span className="text-xs font-bold">LINEで送る</span>
+              </button>
+              <button
+                onClick={sendToEmail}
+                className="flex flex-col items-center justify-center p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors gap-1"
+              >
+                <Mail size={20} />
+                <span className="text-xs font-bold">メール作成</span>
+              </button>
+              <button
+                onClick={printReport}
+                className="flex flex-col items-center justify-center p-2 bg-gray-700 text-white rounded hover:bg-gray-800 transition-colors gap-1"
+              >
+                <Printer size={20} />
+                <span className="text-xs font-bold">印刷</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+export default ChecklistApp;
+
